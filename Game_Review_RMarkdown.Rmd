@@ -1,0 +1,32 @@
+---
+title: "Game Review"
+author: "Team 5"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+## Introduction
+
+This report analyzes video game reviews and provides insights on various factors such as user ratings, platform distribution, genre distribution, and more. We will explore the data using visualizations, summary statistics, and generate a word cloud from user reviews.
+
+## Loading Necessary Libraries
+
+```{r}
+# Load necessary libraries
+library(tidyverse)
+library(ggplot2)
+library(dplyr)
+library(wordcloud)
+```
+
+
+## Load the dataset
+```{r}
+
+data <- read.csv("video_game_reviews.csv")
+
+# Display summary statistics of the dataset
+summary(data)
