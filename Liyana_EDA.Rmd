@@ -1,0 +1,141 @@
+---
+title: "Game Review"
+author: "Team 5"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+## Introduction
+
+This report analyzes video game reviews and provides insights on various factors such as user ratings, platform distribution, genre distribution, and more. We will explore the data using visualizations, summary statistics, and generate a word cloud from user reviews.
+
+## Loading Necessary Libraries
+```{r}
+# Load necessary libraries
+library(tidyverse)
+library(ggplot2)
+library(dplyr)
+library(corrplot)
+library(vcd)
+library(wordcloud)
+library(RColorBrewer)
+library(tm)
+```
+
+
+## Load the dataset
+```{r}
+data <- read.csv("video_game_reviews.csv")
+
+# Display summary statistics of the dataset
+summary(data)
+
+# Get the dimension of the dataset
+dim(data)
+
+# Get the structure of the dataset
+str(data)
+glimpse(data)
+```
+
+## Data cleaning
+```{r}
+
+# View the column names
+colnames(data)
+
+# Dropping unnecessary columns; based on our objectives and correlation (numerical)
+data1 <- data[c("Game Title", "User Rating", "Platform", "Price", "Release Year", "Genre", "Game Length (Hours)", "User Review")]
+
+# Changing all chr columns to factor
+data1$Genre <- factor(data1$Genre)
+data1$Platform <- factor(data1$Platform)
+data1$`User Review` <- factor(data1$`User Review`)
+
+# Checking and handling for missing values
+sum(is.na(data1))
+
+# Rename column names
+
+
+```
+
+## EDA
+```{r}
+# After cleaning the data set
+summary(data1)
+summary(data1$User_Rating)
+sd(data1$User_Rating)
+mean(data1$User_Rating)
+
+# To find the highest rated game
+high <- data1[order(-data$User_Rating), ][1, ]
+
+# To find the lowest rated game
+low <- data1[order(desc(-data$User_Rating)), ][1, ]
+
+
+# 1. Univariate Analysis
+# Bar plot of number of games by genres
+ggplot(data1, aes(x = Genre)) + geom_bar(fill = "red", color = "black") + labs(title = "Number of Games by Genres", x = "Game Genres", y = "Number of Games" )
+
+# Bar plot of game count by platform
+ggplot(data1, aes(x = `Platform`)) + geom_bar(fill = "lightblue", color = "black") + labs(title = "Number of Games by Platform", x = "Platform", y = "Number of Games")
+
+# Histogram of user rating for games released in year 2022
+y22 <- data1%>%filter(`Release Year`==2022)
+ggplot(y22, aes(x = `User Rating`)) + geom_histogram(binwidth = 1, fill = "orange", color = "black") + labs(title = "User Rating by Games Released in 2022", x = "Games Released", y = "User Rating")
+
+
+# 2. Bivariate Analysis
+# Line graph of number of games released over years
+count_release <- data1 %>% count(`Release Year`)
+ggplot(count_release, aes(x = `Release Year`, y = n)) + geom_point() + geom_line() + labs(title = "Number of Games Released Over Years", x = "Years", y = "Number of Games")
+
+# Line graph of average rating by release year
+ggplot(data1, aes(x = `Release Year`, y = `User Rating`)) + stat_summary(fun = "mean", geom = "line", color = "orange") + labs(title = "Average User Rating by Release Year", x = "Release Year", y = "Average Rating")
+
+# Scatter plot for User Rating vs. Game Length (Hours) in year 2020
+v <- data1%>%filter(`Release Year`==2020)
+ggplot(v, aes(x = `User Rating`, y = `Game Length (Hours)`)) + geom_point() + geom_smooth(method = lm) + labs(title = "Correlation between User Rating and Game Length (Hours) in year 2020")
+
+
+# 3. Multivariate Analysis
+# Correlation matrix with numerical data
+b <- cor(b)
+corrplot(b, method = "color", main = "Correlation Matrix with Numerical Data")
+
+# Pairs plot between numerical values
+pairs(data1[,c(2,4,5,7)], main="Pairs Plot")
+
+
+# 4. WORD CLOUD
+# Visualizing user review texts with word cloud
+reviews <- data1$`User Reviews`
+# Clean the empty spaces between the texts
+reviews <- gsub("\\s+", " ", reviews)
+# Split the text into individual words
+reviews <- strsplit(reviews, "\\s+")
+# Remove common stopwords
+reviews <- c(stopwords("en"), "but", "and", "many", "game")
+reviews <- words[!words %in% reviews]
+reviews <- table(reviews)
+wordcloud(names(reviews), reviews, min.freq = 1, scale = c(4, 0.3), colors = brewer.pal(8, "PuOr"), random.order = F)
+```
+
+## Modelling
+```{r}
+# 1. Classification
+
+# 2. Regression
+```
+
+## Model Evaluation
+```{r}
+```
+
+## Conclusion
+```{r}
