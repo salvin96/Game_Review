@@ -1,0 +1,124 @@
+/* General Body Styling */
+body {
+  font-family: Arial, sans-serif; /* Simple font */
+  background-color: #2eb2a6; /* Light gray for background */
+  color: white; /* Black text */
+  margin: 0;
+  padding: 0;
+}
+h1 {
+    font-family: Arial, sans-serif;
+    color: white;
+    font-size: 24px;
+}
+
+/* Style for h2 */
+h2 {
+    font-family: Arial, serif;
+    color: white;
+	font-size: 20px;
+}
+
+/* Style for h3 */
+h3 {
+    font-family: Arial, serif;
+    color: #dff8eb;
+	font-size: 16px;
+}
+
+/* Custom CSS for hyperlinks */
+.custom-link {
+  color: #dfecf8;
+  text-decoration: underline;
+  font-weight: bold;
+}
+.custom-link:hover {
+  color: #2f0def;
+  text-decoration: underline;
+}
+
+/* Navbar Styling */
+.navbar {
+  width: 250px; /* Fixed width for navbar */
+  position: fixed; /* Sticks to the left */
+  top: 0;
+  left: 0;
+  height: 100%; /* Full height */
+  background-color: white; /* Black colour navbar */
+  overflow-y: auto; /* Enable scrolling if the content overflows */
+  padding-top: 20px; /* Space at the top */
+}
+
+/* Navbar Links */
+.navbar a {
+  display: block; /* Full-width links */
+  padding: 10px 15px; /* Add some space */
+  /* text-decoration: underline; Remove underline 
+  text-decoration-color: white;*/
+  font-size: 16px; /* Regular font size */
+  color: #000000; /* black text */
+  background-color: #3ffcd1; /* Match navbar background */
+  transition: background-color 0.3s; /* Smooth transition */
+}
+
+/* Hover Effect */
+.navbar a:hover {
+  background-color: #5a5757; /* Darker blue when hovered */
+  color:white
+}
+
+/* Active Link */
+.navbar a.active {
+  background-color: #000000; /* Even darker blue for active link */
+  color:white
+}
+
+/* Main Content Area */
+.content {
+  margin-left: 270px; /* Space for the navbar on desktop */
+  padding: 20px;
+  background-color: #ffffff; /* White background for content */
+  min-height: 100vh; /* Full height for the viewport */
+}
+
+/* Responsive Adjustments for Smaller Screens */
+@media (max-width: 768px) {
+  /* Make Navbar Smaller and Collapsible */
+  .navbar {
+    width: 200px; /* Smaller navbar width */
+    height: auto; /* Adjust height */
+    position: static; /* Move navbar above content */
+  }
+
+  .navbar a {
+    font-size: 14px; /* Smaller font size for links */
+    padding: 10px 15px; /* Adjust padding */
+  }
+
+  /* Content Area Adjustment */
+  .content {
+    margin-left: 0; /* No margin on smaller screens */
+    padding: 15px; /* Reduce padding */
+  }
+}
+
+@media (max-width: 480px) {
+  /* Stack Navbar Links */
+  .navbar {
+    width: 100%; /* Full width */
+    height: auto; /* Auto height */
+    position: static; /* Make navbar inline with content */
+  }
+
+  .navbar a {
+    text-align: center; /* Center align links */
+    padding: 8px 10px; /* Smaller padding */
+    font-size: 12px; /* Smaller font size */
+  }
+
+  /* Content Area Adjustment */
+  .content {
+    padding: 10px; /* Less padding for small screens */
+  }
+}
+}
