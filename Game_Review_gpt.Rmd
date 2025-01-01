@@ -193,6 +193,7 @@ wordcloud(names(freq), freq, min.freq = 1, scale = c(4, 0.5), colors = brewer.pa
 ```
 
 # Prepare Data For Modelling (Classification)
+###create new column "popular" to classify the rating of the games basen on the 70th percentile threshold and split the data into 70% training and 30% testing
 ```{r}
 # Check the structure of the dataset
 str(data)
@@ -245,6 +246,7 @@ confusionMatrix(svm_predictions, test_data$Popularity)
 ```
 
 # Prepare Data For Modelling (Regression)
+###prepare data by splitting it to 70% training and 30% testing and User.Rating as the target variable
 ```{r}
 #regression
 set.seed(123)
@@ -276,13 +278,11 @@ rf_predictions <- predict(rf_model, newdata = test_data)
 # Calculate RMSE and R-Square
 rmse <- sqrt(mean((rf_predictions - test_data$User.Rating)^2))
 rsq <- cor(rf_predictions, test_data$User.Rating)^2
-print(paste("R-squared:", rsq))
-print(paste("Root Mean Squared Error (RMSE):", rmse))
-# Show first 35 actual and predicted data
+mae <- mean(abs(rf_predictions - test_data$User.Rating))
+
+# Visualize prediction using plot
 rf <- data.frame(y_test = test_data$User.Rating, y_pred = round(rf_predictions,1))
 subset_rf<- rf[1:35, ]
-#print(subset_rf)
-# Visualize prediction using plot
 par(mar = c(5, 4, 4, 2))
 plot(subset_rf$y_test, type = "l", col = "black", lwd = 2, xlab = "Index", ylab = "Value")
 lines(subset_rf$y_pred, col = "blue", lwd = 2)
@@ -296,26 +296,17 @@ title(main="Actual vs Predicted for Random Forest Regressor Model")
 lr_model <- lm(User.Rating ~ Price + Game.Length..Hours.,
             data = train_data)
 
-# Summarize the model
-#summary(lr_model)
-
 # Make predictions on the test set
 lr_predictions <- predict(lr_model, newdata = test_data)
 
 # Calculate RMSE and R-Square
 rmse_lr <- sqrt(mean((lr_predictions - test_data$User.Rating)^2))
 rsq_lr <- cor(lr_predictions, test_data$User.Rating)^2
-mae <- mean(abs(lr_predictions - test_data$User.Rating))
-print(paste("Mean Absolute Error (MAE):", mae))
-print(paste("R-squared:", rsq))
-print(paste("Root Mean Squared Error (RMSE):", rmse))
-
-# Show first 35 actual and predicted data
-lr <- data.frame(y_test = test_data$User.Rating, y_pred = round(lr_predictions,1))
-subset_lr<- lr[1:35, ]
-#print(subset_lr)
+mae_lr <- mean(abs(lr_predictions - test_data$User.Rating))
 
 # Visualize prediction using plot
+lr <- data.frame(y_test = test_data$User.Rating, y_pred = round(lr_predictions,1))
+subset_lr<- lr[1:35, ]
 par(mar = c(5, 4, 4, 2))
 plot(subset_lr$y_test, type = "l", col = "black", lwd = 2, xlab = "Index", ylab = "Value")
 lines(subset_lr$y_pred, col = "blue", lwd = 2)
@@ -324,19 +315,22 @@ title(main="Actual vs Predicted for Linear Regression Model")
 
 ```
 
+##comparing Random forest and Linear Regression 
 ```{r}
-#Compare Regression Models Performance
-cat("Random Forest:\n")
-cat("RMSE:", rmse, "\n")
-cat("R-Squared:", rsq, "\n")
-
-cat("Linear Regression:\n")
-cat("RMSE:", rmse_lr, "\n")
-cat("R-Squared:", rsq_lr, "\n")
+#compare model performance
+evalution_table<-data.frame(
+  Model = c('Random Forest', 'Linear Regression'),
+  R_squared = c(rsq,rsq_lr),
+  RMSE = c(rmse,rmse_lr),
+  MAE = c(mae,mae_lr)
+)
+print(evalution_table)
 
 ```
 
 # Conclusion
+
+###According to the correlation checking, price and game length hour have a real correlation with rating. This implies that the value of upcoming rating games can be predicted using these factors. The best model, as determined by the modeling part, is:
 
 ## First Objective: Classify Popular and Unpopular Games
 ### Best model : SVM Model
@@ -346,4 +340,4 @@ cat("R-Squared:", rsq_lr, "\n")
 ### Best model : Linear Regression Algorithm
 ### Root Mean Squared Error (RMSE): 1.160752
 ### R-squared (R²): 0.9761487
-
+### MAE : 1.007670

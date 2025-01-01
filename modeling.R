@@ -125,9 +125,11 @@ rf_predictions <- predict(rf_model, newdata = test_data)
 
 # Calculate RMSE and R-Square
 rmse <- sqrt(mean((rf_predictions - test_data$User.Rating)^2))
+mae <- mean(abs(rf_predictions - test_data$User.Rating))
 rsq <- cor(rf_predictions, test_data$User.Rating)^2
 print(paste("R-squared:", rsq))
 print(paste("Root Mean Squared Error (RMSE):", rmse))
+print(paste("Root Mean Squared Error (RMSE):", mae))
 
 
 # Show first 35 actual and predicted data
@@ -161,10 +163,10 @@ lr_predictions <- predict(lr_model, newdata = test_data)
 # Calculate RMSE and R-Square
 rmse_lr <- sqrt(mean((lr_predictions - test_data$User.Rating)^2))
 rsq_lr <- cor(lr_predictions, test_data$User.Rating)^2
-mae <- mean(abs(lr_predictions - test_data$User.Rating))
-print(paste("Mean Absolute Error (MAE):", mae))
-print(paste("R-squared:", rsq))
-print(paste("Root Mean Squared Error (RMSE):", rmse))
+mae_lr <- mean(abs(lr_predictions - test_data$User.Rating))
+print(paste("Mean Absolute Error (MAE):", mae_lr))
+print(paste("R-squared:", rsq_lr))
+print(paste("Root Mean Squared Error (RMSE):", rmse_lr))
 
 # Show first 35 actual and predicted data
 lr <- data.frame(y_test = test_data$User.Rating, y_pred = round(lr_predictions,1))
@@ -181,13 +183,14 @@ title(main="Actual vs Predicted for Linear Regression Model")
 
 
 #compare model performance
-cat("Random Forest:\n")
-cat("RMSE:", rmse, "\n")
-cat("R-Squared:", rsq, "\n")
+evalution_table<-data.frame(
+  Model = c('Random Forest', 'Linear Regression'),
+  R_squared = c(rsq,rsq_lr),
+  RMSE = c(rmse,rmse_lr),
+  MAE = c(mae,mae_lr)
+)
+print(evalution_table)
 
-cat("Linear Regression:\n")
-cat("RMSE:", rmse_lr, "\n")
-cat("R-Squared:", rsq_lr, "\n")
 
 
 
