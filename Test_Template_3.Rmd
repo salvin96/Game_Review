@@ -1,0 +1,366 @@
+---
+title: "WQD7004 Group Assignment"
+author: "Team 5"
+date: "`r Sys.Date()`"
+output:
+  rmdformats::readthedown:
+    highlight: kate
+    css: custom.css
+---
+
+```{r setup, include=FALSE}
+## Global options
+knitr::opts_chunk$set(cache = TRUE)
+```
+
+
+# Group Members (Team 5) {#group-members}
+<ul>
+  <li style="color: black;">Siti Nur Liyana Roslan (23067122)</li>
+  <li style="color: black;">Karenina Kamila (23117951)</li>
+  <li style="color: black;">Nur Ridwana Mohd Rafix (24054165)</li>
+  <li style="color: black;">Bong Hui Xin (22089462)</li>
+  <li style="color: black;">Salvin A/L Ravindran (17167138)</li>
+</ul>
+
+
+### Project Title: Predicting User Ratings and Classifying Popularity in Video Games
+### Dataset 
+#### Title: Video Game Reviews and Ratings
+#### Source: <a href= "https://www.kaggle.com/datasets/jahnavipaliwal/video-game-reviews-and-ratings" class="custom-link">https://www.kaggle.com/datasets/jahnavipaliwal/video-game-reviews-and-ratings</a>
+#### Year of Publish: 2024
+#### Dataset Description: Consists of 18 features, and 47774 rows of synthetic data on video game reviews and ratings.
+#### Dataset Category: Entertainment
+
+<table style="width:100%; border: 1px solid black; border-collapse: collapse;">
+  <tr>
+    <th style="border: 1px solid black; padding: 8px;">Numerical</th>
+    <th style="border: 1px solid black; padding: 8px;">Categorical</th>
+  </tr>
+  <tr>
+    <td style="border: 1px solid black; padding: 8px;">User.Rating, Price, Release.Year, Game.Length..Hours., Min.Number.of.Player</td>
+    <td style="border: 1px solid black; padding: 8px;">Game.Title, Age.Group.Targeted, Platform, Requires.Special.Device, Developer, Publisher, Genre, Graphics.Quality, Soundtrack.Quality, Story.Quality, Game.Mode, User.Review.Text</td>
+  </tr>
+</table>
+
+
+# Introduction {#introduction}
+
+In this project, our team leveraged R programming to analyse video game reviews and ratings, identify key factors influencing high ratings, and propose actionable insights for game developers and publishers. The analysis involved data visualisation, summary statistics, and generating a word cloud extract patterns and trends from user reviews.
+
+# Objectives 
+### 1.	To classify popular and non-popular video games.
+### 2. To predict user rating of video games.
+By achieving these objectives, this research aims to provide a data-driven foundation for making informed decisions in game design and marketing strategies, ultimately enhancing the player experience and boosting game success in a competitive market.
+
+# Loading Necessary Libraries 
+
+```{r}
+# Load necessary libraries
+#install.packages(c("tidyverse", "ggplot2", "dplyr", "corrplot", "vcd", "wordcloud", "RColorBrewer", "tm"))
+#install.packages(c("rpart","rpart.plot", "caret", "e1071", "randomForest"))
+library(rpart)
+library(e1071)
+library(dplyr)
+library(caret)
+library(rpart.plot)
+library(randomForest)
+library(tidyverse)
+library(ggplot2)
+library(corrplot)
+library(vcd)
+library(wordcloud)
+library(RColorBrewer)
+library(tm)
+```
+
+# Load the Dataset 
+```{r}
+data <- read.csv("video_game_reviews.csv")
+
+# Display summary statistics of the dataset
+summary(data)
+
+# Get the dimension of the dataset
+dim(data)
+
+# Get the structure of the dataset
+str(data)
+glimpse(data)
+```
+
+# Data Pre-processing 
+```{r}
+
+# View the column names
+colnames(data)
+
+# Dropping unnecessary columns; based on our objectives and correlation (numerical)
+data1 <- data[c("Game.Title", "User.Rating", "Price", "Platform", "Release.Year", "Genre", "Game.Length..Hours.", "User.Review.Text")]
+
+# Changing all chr columns to factor
+data1$Genre <- factor(data1$Genre)
+data1$Platform <- factor(data1$Platform)
+data1$User.Review.Text <- factor(data1$User.Review.Text)
+
+# Checking and handling for missing values
+sum(is.na(data1))
+
+```
+
+# EDA 
+```{r}
+# After cleaning the data set, we explored the summary of data1 and find the values of standard deviation and mean of the dataset.
+summary(data1)
+summary(data1$User.Rating)
+sd(data1$User.Rating)
+mean(data1$User.Rating)
+
+
+# Next, we found the highest and lowest rated game.
+high <- data1[order(-data$User.Rating), ][1, ]
+high
+low <- data1[order(desc(-data$User.Rating)), ][1, ]
+low
+
+
+# Since our focus attribute is 'User Ratings', we explored the quantiles of this data that can be used in modelling part later on.
+quantiles <- quantile(data1$User.Rating, probs = c(0.25, 0.5, 0.75))
+cat("25th Percentile:", quantiles[1], "\n")
+cat("Median:", quantiles[2], "\n")
+cat("75th Percentile:", quantiles[3], "\n")
+```
+
+```{r}
+
+# 1. Univariate Analysis
+# Bar plot of number of games by genres
+ggplot(data1, aes(x = Genre)) + geom_bar(fill = "red", color = "black") + labs(title = "Number of Games by Genres", x = "Game Genres", y = "Number of Games" )
+# The graph shows that the number of games for each genres are in between the same range, hence making the dataset quite balanced and does not require additional balance tuning.
+
+# Bar plot of game count by platform
+ggplot(data1, aes(x = Platform)) + geom_bar(fill = "lightblue", color = "black") + labs(title = "Number of Games by Platform", x = "Platform", y = "Number of Games")
+# Same goes to the type of platform, the graph also shows that the number of games are spread equally across variety of platforms.
+
+# Histogram of user rating for games released in year 2022
+y22 <- data1%>%filter(Release.Year==2022)
+ggplot(y22, aes(x = User.Rating)) + geom_histogram(binwidth = 1, fill = "orange", color = "black") + labs(title = "User Rating by Games Released in 2022", x = "Games Released", y = "User Rating")
+# The user ratings depicted that rating values peaked at 32.50 for majority of the games released in 2022. There is a noticeable decreasing slope between rating value 27.5 and 32.5. This pattern creates a "valley" in the distribution. The slope and subsequent recovery could be due to various factors, such as shifts in user preferences or game characteristics that polarized ratings into higher and lower groups.
+```
+
+```{r}
+# 2. Bivariate Analysis
+# Line graph of number of games released over years
+count_release <- data1 %>% count(Release.Year)
+ggplot(count_release, aes(x = Release.Year, y = n)) + geom_point() + geom_line() + labs(title = "Number of Games Released Over Years", x = "Years", y = "Number of Games")
+# The graph peaked at 2020 with the most number of games released might be due to global pandemic that increased the demand for home entertainment With lockdowns and social distancing measures in place. Gaming through digital platforms had resonated with audiences because they provided a sense of normalcy and connection in a socially isolated world.
+
+# Line graph of average rating by release year
+ggplot(data1, aes(x = Release.Year, y = User.Rating)) + stat_summary(fun = "mean", geom = "line", color = "orange") + labs(title = "Average User Rating by Release Year", x = "Release Year", y = "Average Rating")
+# Although 2020 has the highest number of game releases it also received the lowest average ratings. This can be attributed to several factors, including the increased player base and harsher standards in a crowded market. Mass production of games releases might dilute its quality which caused some games may have struggled to stand out, and the average quality might have dropped due to oversaturated market.
+
+# Scatter plot for User Rating vs. Game Length (Hours) in year 2020
+v <- data1%>%filter(Release.Year==2020)
+ggplot(v, aes(x = User.Rating, y = Game.Length..Hours.)) + geom_point() + geom_smooth(method = lm) + labs(title = "Correlation between User Rating and Game Length (Hours) in year 2020")
+# This scatter plot graph shows positive correlation as the points form an upward trend. Generally, games with longer playtimes tend to have higher ratings which might suggests that users favor longer games.
+```
+
+
+```{r}
+# 3. Multivariate Analysis
+# Correlation matrix with numerical data
+b <- data1[sapply(data1, is.numeric)]
+b <- cor(b)
+corrplot(b, method = "color", main = "Correlation Matrix with Numerical Data")
+# This correlation matrix shows that 'Price' and 'Game Length Hours' are positively correlated with user rating values, particularly the 'Price' being highly correlated with 'User Rating'. Other attributes such as release year shows no relation at all.
+```
+
+
+```{r}
+# 4. Correlation Analysis for Categorical Data
+chisq.test(data1$Genre, data1$Platform)
+# 'Genre' and 'Platform' are highly correlated to each other (p=0.9282).
+
+chisq.test(data1$Genre, data1$User.Review.Text)
+chisq.test(data1$Platform, data1$User.Review.Text)
+# Meanwhile, 'User Review Text' data is only weakly correlated to both 'Genre' and 'Platform data'.
+
+quality<- data[c("User.Rating", "Graphics.Quality", "Soundtrack.Quality", "Story.Quality")]
+chisq.test(quality$User.Rating, quality$Graphics.Quality)
+chisq.test(quality$User.Rating, quality$Soundtrack.Quality)
+chisq.test(quality$User.Rating, quality$Story.Quality)
+# All of the game qualities are positively correlated with 'User Rating' with 'Story Quality' obtaining the highest correlation compared to 'Graphics Quality' and 'Soundtrack Quality'.
+```
+
+
+```{r}
+# 5. WORD CLOUD
+# Visualizing user review texts with word cloud
+reviews <- data1$User.Review
+reviews <- gsub("\\s+", " ", reviews)
+words <- unlist(strsplit(reviews, "\\s+"))
+stopwords <- c(stopwords("en"), "but", "and", "many")
+words <- words[!tolower(words) %in% stopwords]
+# Create a frequency table of the words
+freq <- table(words)
+# Generate the word cloud
+wordcloud(names(freq), freq, min.freq = 1, scale = c(4, 0.5), colors = brewer.pal(8, "PuOr"), random.order = F)
+# The word cloud analysis reveals that the words "amazing," "graphics," "better," "bugs," and "gameplay" appear in similar sizes, suggesting they occur with nearly equal frequency in the comments. This indicates these terms are key themes in player feedback and likely central to players' experiences with the games.
+# In contrast, words like "great," "disappointing," and "solid" appear slightly smaller, meaning they are mentioned less frequently but still contribute to the overall sentiment. These terms might reflect players' general impressions but are not as central as the dominant themes.
+# The prominence of "graphics" and "gameplay" in the word cloud suggests they are significant factors influencing players' opinions. Players may have expressed positive sentiments ("amazing", "great", "solid" and "better") which might highlight players' appreciation for improved graphics or engaging gameplay. Meanwhile, negative sentiments (e.g., "bugs" and "disappointing") might indicates that technical issues might have impacted players' enjoyment.
+
+```
+
+# Prepare Data For Modelling (Classification) {#classification}
+### Create new column "popular" to classify the rating of the games basen on the 70th percentile threshold and split the data into 70% training and 30% testing
+```{r}
+# Check the structure of the dataset
+str(data)
+
+# Add Popularity column
+data$Popularity <- ifelse(data$User.Rating >= 35.1, "Popular", "Unpopular")
+data$Popularity <- as.factor(data$Popularity)
+data$User.Rating <- as.numeric(data$User.Rating)
+
+#spliting the data into training 70% and testing 30%
+set.seed(123)
+train_index <- createDataPartition(data$Popularity, p=0.7, list=FALSE)
+train_data <- data[train_index, ]
+test_data <- data[-train_index, ]
+
+message(
+  "Initial: ", nrow(data), " rows.\n",
+  "Train: ", nrow(train_data), " rows  \n",
+  "Test: ", nrow(test_data), " rows ."
+)
+```
+
+# Objective 1 :  Classify Popular and Unpopular Games
+
+### Classification Algorithm 1 : Decision Tree Model
+```{r}
+# Build the Decision Tree model
+dt_model <- rpart(Popularity ~ Price + Game.Length..Hours.,
+                  data = train_data,
+                  method = "class")
+# Predict on the test data
+dt_predictions <- predict(dt_model, newdata = test_data, type = "class")
+# Visualize the Decision Tree
+rpart.plot(dt_model)
+# Confusion matrix to evaluate the model
+confusionMatrix(dt_predictions, test_data$Popularity)
+```
+
+### Classification Algorithm 2 : SVM Model
+```{r}
+# Train the SVM model
+svm_model <- svm(Popularity ~ Price + Game.Length..Hours.,
+                 data = train_data,
+                 type = "C-classification",
+                 kernel = "linear")
+# Predict on the test data
+svm_predictions <- predict(svm_model, newdata = test_data)
+# Confusion matrix to evaluate the SVM model
+confusionMatrix(svm_predictions, test_data$Popularity)
+```
+
+# Prepare Data For Modelling (Regression) 
+### Prepare data by splitting it to 70% training and 30% testing and User.Rating as the target variable
+```{r}
+#regression
+set.seed(123)
+train_index <- createDataPartition(data$User.Rating, p=0.7, list=FALSE)
+train_data <- data[train_index, ]
+test_data <- data[-train_index, ]
+
+message(
+  "Initial: ", nrow(data), " rows.\n",
+  "Train: ", nrow(train_data), " rows  \n",
+  "Test: ", nrow(test_data), " rows ."
+)
+```
+
+# Objective 2 :  Predict The Future Rating of Games 
+
+### Regression Algorithm 1 : Random Forest Model
+
+```{r}
+train_data$User.Rating <- as.numeric(train_data$User.Rating)
+test_data$User.Rating <- as.numeric(test_data$User.Rating)
+# Train the Random Forest model
+rf_model <- randomForest(User.Rating ~ Price + Game.Length..Hours.,
+                         data = train_data,
+                         importance = TRUE,
+                         ntree = 50)
+# Make predictions on the test data
+rf_predictions <- predict(rf_model, newdata = test_data)
+# Calculate RMSE and R-Square
+rmse <- sqrt(mean((rf_predictions - test_data$User.Rating)^2))
+rsq <- cor(rf_predictions, test_data$User.Rating)^2
+mae <- mean(abs(rf_predictions - test_data$User.Rating))
+
+# Visualize prediction using plot
+rf <- data.frame(y_test = test_data$User.Rating, y_pred = round(rf_predictions,1))
+subset_rf<- rf[1:35, ]
+par(mar = c(5, 4, 4, 2))
+plot(subset_rf$y_test, type = "l", col = "black", lwd = 2, xlab = "Index", ylab = "Value")
+lines(subset_rf$y_pred, col = "blue", lwd = 2)
+legend("topright", legend = c("Actual", "Predicted"), col = c("black", "blue"), lwd = 2)
+title(main="Actual vs Predicted for Random Forest Regressor Model")
+```
+
+### Regression Algorithm 2 : Linear Regression Model
+```{r}
+# Fit the linear regression model
+lr_model <- lm(User.Rating ~ Price + Game.Length..Hours.,
+            data = train_data)
+
+# Make predictions on the test set
+lr_predictions <- predict(lr_model, newdata = test_data)
+
+# Calculate RMSE and R-Square
+rmse_lr <- sqrt(mean((lr_predictions - test_data$User.Rating)^2))
+rsq_lr <- cor(lr_predictions, test_data$User.Rating)^2
+mae_lr <- mean(abs(lr_predictions - test_data$User.Rating))
+
+# Visualize prediction using plot
+lr <- data.frame(y_test = test_data$User.Rating, y_pred = round(lr_predictions,1))
+subset_lr<- lr[1:35, ]
+par(mar = c(5, 4, 4, 2))
+plot(subset_lr$y_test, type = "l", col = "black", lwd = 2, xlab = "Index", ylab = "Value")
+lines(subset_lr$y_pred, col = "blue", lwd = 2)
+legend("topright", legend = c("Actual", "Predicted"), col = c("black", "blue"), lwd = 2)
+title(main="Actual vs Predicted for Linear Regression Model")
+
+```
+
+### Comparing Random forest and Linear Regression 
+```{r}
+#compare model performance
+evalution_table<-data.frame(
+  Model = c('Random Forest', 'Linear Regression'),
+  R_squared = c(rsq,rsq_lr),
+  RMSE = c(rmse,rmse_lr),
+  MAE = c(mae,mae_lr)
+)
+print(evalution_table)
+
+```
+
+
+# Conclusion
+
+According to the correlation checking, price and game length hour have a real correlation with rating. This implies that the value of upcoming rating games can be predicted using these factors. The best model, as determined by the modeling part, is:
+
+### First Objective: Classify Popular and Unpopular Games
+#### Best model : SVM Model
+#### Accuracy: 96.09%
+
+<br>
+
+### Second Objective: Predict The Future Rating of Games
+#### Best model : Linear Regression Algorithm
+#### Root Mean Squared Error (RMSE): 1.160752
+#### R-squared (R²): 0.9761487
+#### MAE : 1.007670
+
